@@ -4,6 +4,35 @@
 
 它不是虚拟声卡。手机通过 USB Gadget 暴露 UAC2 麦克风设备，Android 端用 AAudio 读取手机实体麦克风，再用 Rust/RNNoise 做降噪并送到 USB 输入端。
 
+## 最新版本
+
+当前推荐使用 `v0.1.2`：
+
+```plaintext
+https://github.com/TNXGLab/lavender-uac2-mic-kit/releases/tag/v0.1.2
+```
+
+Release 资产：
+
+```plaintext
+lavender-st7-defconfig-uac2-ksu-boot.img
+aaudio_uac2_bridge_rust
+lavender-uac2-mic-kit-services.zip
+```
+
+SHA256：
+
+```plaintext
+lavender-st7-defconfig-uac2-ksu-boot.img
+cdaeafa49154341d971f7a5a1938708e2c7c218f3b52f3d35f2771f09d9c34b5
+
+aaudio_uac2_bridge_rust
+196abd4363d27125e980a31e10a0a7068f42f1bf72ed4cb10d31988e1c8ad4af
+
+lavender-uac2-mic-kit-services.zip
+2a3e298adef572ba73a20f151e9600e975ea03a640047eac6772bce56a3fdb88
+```
+
 ## 适用范围
 
 1.  设备：小米 Redmi Note 7，设备代号必须是 `lavender`。
