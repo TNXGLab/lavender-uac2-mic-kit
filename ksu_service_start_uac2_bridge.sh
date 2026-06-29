@@ -34,8 +34,16 @@ for pid in $(pidof aaudio_uac2_bridge_rust 2>/dev/null); do
   kill -9 "$pid" 2>/dev/null || true
 done
 
-nohup "$BRIDGE" "$GAIN" "$VAD_THRESHOLD" "$FLOOR_ATTENUATION" "$RAW_BLEND" "$ACTIVE_RMS_THRESHOLD" >/data/local/tmp/aaudio_uac2_bridge.log 2>&1 &
-echo "bridge launched with Rust/RNNoise gain=$GAIN vad_threshold=$VAD_THRESHOLD floor_attenuation=$FLOOR_ATTENUATION raw_blend=$RAW_BLEND active_rms_threshold=$ACTIVE_RMS_THRESHOLD"
+(
+  while true; do
+    "$BRIDGE" "$GAIN" "$VAD_THRESHOLD" "$FLOOR_ATTENUATION" "$RAW_BLEND" "$ACTIVE_RMS_THRESHOLD"
+    EXIT_CODE="$?"
+    echo "bridge exited with code=$EXIT_CODE at $(date), restarting in 2s"
+    sleep 2
+  done
+) >/data/local/tmp/aaudio_uac2_bridge.log 2>&1 &
+
+echo "bridge watchdog launched with Rust/RNNoise gain=$GAIN vad_threshold=$VAD_THRESHOLD floor_attenuation=$FLOOR_ATTENUATION raw_blend=$RAW_BLEND active_rms_threshold=$ACTIVE_RMS_THRESHOLD"
 sleep 2
 
 cat /data/local/tmp/aaudio_uac2_bridge.log 2>/dev/null || true

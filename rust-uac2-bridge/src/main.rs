@@ -4,6 +4,8 @@ use std::env;
 use std::ffi::{CStr, CString};
 use std::ptr;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::thread;
+use std::time::Duration;
 
 const SAMPLE_RATE: i32 = 48_000;
 const CHANNELS: i32 = 1;
@@ -182,7 +184,7 @@ impl RuntimeConfig {
 fn run(config: RuntimeConfig) -> Result<(), String> {
     let tinyalsa = TinyAlsa::load()?;
     let input = open_aaudio_input()?;
-    let output = open_uac2_playback(&tinyalsa)?;
+    let mut output = wait_for_uac2_playback(&tinyalsa)?;
     let mut denoise = DenoiseState::new();
 
     let mut input_samples = [0_i16; FRAME_SIZE];
@@ -269,7 +271,13 @@ fn run(config: RuntimeConfig) -> Result<(), String> {
             )
         };
         if write_result < 0 {
-            return Err(format!("pcm_write failed: {}", output.error()));
+            eprintln!(
+                "pcm_write failed: {}, reopening UAC2 playback",
+                output.error()
+            );
+            drop(output);
+            output = wait_for_uac2_playback(&tinyalsa)?;
+            skip_first_frame = true;
         }
     }
 
@@ -381,6 +389,28 @@ fn open_uac2_playback(tinyalsa: &TinyAlsa) -> Result<Uac2Playback, String> {
 
         Ok(playback)
     }
+}
+
+fn wait_for_uac2_playback(tinyalsa: &TinyAlsa) -> Result<Uac2Playback, String> {
+    let mut attempts = 0_u32;
+
+    while KEEP_RUNNING.load(Ordering::SeqCst) {
+        match open_uac2_playback(tinyalsa) {
+            Ok(playback) => {
+                if attempts > 0 {
+                    eprintln!("UAC2 playback reopened after {attempts} attempts");
+                }
+                return Ok(playback);
+            }
+            Err(error) => {
+                attempts = attempts.saturating_add(1);
+                eprintln!("UAC2 playback is not ready: {error}; retrying");
+                thread::sleep(Duration::from_secs(1));
+            }
+        }
+    }
+
+    Err("stopped while waiting for UAC2 playback".to_string())
 }
 
 fn open_tinyalsa_handle() -> Result<*mut c_void, String> {

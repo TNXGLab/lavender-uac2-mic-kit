@@ -189,6 +189,26 @@ adb shell 'su -c "cat /data/local/tmp/ksu-uac2-adb.log; cat /data/local/tmp/ksu-
 adb shell 'su -c "cat /proc/asound/cards; cat /proc/asound/pcm"'
 ```
 
+## 运行一段时间后没有输入
+
+这个项目没有 hook Android framework，也没有 hook 系统音频服务。
+
+桥接程序只是一个 root 后台进程：
+
+```plaintext
+AAudio 读取手机麦克风 -> Rust/RNNoise 处理 -> tinyalsa 写 UAC2 PCM
+```
+
+如果电脑睡眠、录音软件释放设备、USB 短暂重枚举、线缆抖动，UAC2 PCM 写入可能返回：
+
+```plaintext
+pcm_write failed: cannot write stream data: I/O error
+```
+
+新版本会在这个错误出现时自动关闭并重新打开 UAC2 playback。
+
+KernelSU 服务脚本也带 watchdog，即使桥接进程异常退出，也会在 2 秒后自动重启。
+
 ## 调整降噪和输入电平
 
 默认启动参数：
