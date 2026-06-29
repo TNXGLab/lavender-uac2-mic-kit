@@ -34,6 +34,10 @@
     /data/adb/uac2/aaudio_uac2_bridge_rust
     ```
 
+    桥接进程不会开机后一直占用麦克风。
+
+    KernelSU 服务会常驻监控 USB 状态：当 USB 已连接、gadget 处于 configured 状态，并且 `dumpsys adb` 显示 `connected_to_adb=true` 时才启动桥接；拔掉 USB、ADB 授权连接消失或 USB 状态消失后会停止桥接。
+
 4.  音频处理链：
 
     ```plaintext
@@ -177,6 +181,26 @@ USB Audio
 adb shell 'su -c "ps -A | grep aaudio_uac2_bridge_rust || true"'
 ```
 
+查看 USB 触发条件：
+
+```sh
+adb shell 'su -c "cat /sys/class/power_supply/usb/online; cat /sys/class/android_usb/android0/state; dumpsys adb | grep connected_to_adb"'
+```
+
+正常连接到已授权电脑时，通常会看到：
+
+```plaintext
+1
+CONFIGURED
+connected_to_adb=true
+```
+
+完整检查命令：
+
+```sh
+adb shell 'su -c "dumpsys adb | grep connected_to_adb"'
+```
+
 查看 USB Gadget 和桥接日志：
 
 ```sh
@@ -208,6 +232,10 @@ pcm_write failed: cannot write stream data: I/O error
 新版本会在这个错误出现时自动关闭并重新打开 UAC2 playback。
 
 KernelSU 服务脚本也带 watchdog，即使桥接进程异常退出，也会在 2 秒后自动重启。
+
+从 `v0.1.2` 开始，watchdog 只在 USB/ADB 授权连接条件满足时启动桥接。
+
+拔掉 USB 后，monitor 会停止 `aaudio_uac2_bridge_rust`，释放手机麦克风。
 
 ## 调整降噪和输入电平
 
