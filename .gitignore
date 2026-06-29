@@ -1,0 +1,26 @@
+.DS_Store
+
+# Build outputs
+target/
+rust-uac2-bridge/target/
+release-assets/
+lavender-uac2-mic-kit-services/
+
+# Release-only binaries and images
+*.img
+*Image.gz*
+aaudio_uac2_bridge_rust
+uac2_bridge_rust
+
+# Local diagnostics and recordings
+*.wav
+*.log
+*.txt
+
+# Local third-party source trees
+tinyalsa/
+
+# Android / kernel local work products
+android_kernel_xiaomi_lavender/
+*.dtb
+*.dtbo

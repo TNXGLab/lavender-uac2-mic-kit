@@ -1,0 +1,8 @@
+[package]
+name = "uac2_bridge_rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libc = "0.2"
+nnnoiseless = { version = "0.5.2", default-features = false }
